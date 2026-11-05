@@ -1,0 +1,402 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>바로 찍는 거래명세서</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#d92f3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="바로명세서">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+/* 화면: 입력 카드 + 판매왕 프로 PC판과 같은 거래명세서 미리보기. 인쇄하면 종이만 A4로 나간다.
+   종이 치수는 PC판 견본(V:\판매왕블로그\견본\견본_거래명세서.pdf)을 재서 맞췄다. */
+:root{
+  --bg:#f3f4f7; --card:#ffffff; --fg:#1d2230; --muted:#5d6577; --line:#d6dae3;
+  --accent:#d92f3a; --accent-fg:#ffffff;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171f; --card:#1d2230; --fg:#e7e9ef; --muted:#9aa2b4; --line:#323949;
+  --accent:#f0606a; --accent-fg:#14171f; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#14171f; --card:#1d2230; --fg:#e7e9ef; --muted:#9aa2b4; --line:#323949;
+  --accent:#f0606a; --accent-fg:#14171f; color-scheme:dark }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+.wrap{max-width:820px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.side{display:grid;gap:14px;align-content:start;min-width:0}
+@media (min-width:1100px){
+  .wrap{max-width:1380px;grid-template-columns:400px minmax(0,1fr);align-items:start}
+  .wrap>header{grid-column:1/-1}
+  .sheetbox{position:sticky;top:12px}
+}
+header h1{font-size:1.4rem;margin:0;font-weight:900;letter-spacing:-.01em}
+header p{margin:2px 0 0;color:var(--muted);font-size:.88rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px;min-width:0}
+.card h2{font-size:.95rem;margin:0}
+.card h2 small{font-weight:400;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.full{grid-column:1/-1}
+label{display:grid;gap:3px;font-size:.8rem;color:var(--muted);min-width:0}
+input,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 9px;width:100%;min-width:0}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.item{display:grid;grid-template-columns:2fr 1.2fr .8fr 1.2fr auto;gap:6px;align-items:end;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+@media (max-width:520px){.item{grid-template-columns:1fr 1fr 1fr}.item .name{grid-column:1/3}.item .spec{grid-column:3/4}}
+button{font:inherit;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px 12px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700;padding:10px 16px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{font-size:.82rem;color:var(--muted);margin:0}
+.pc{border-left:3px solid var(--accent)}
+.pc a{color:var(--accent);font-weight:700}
+.saved{font-size:.78rem;color:var(--muted)}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.links{display:flex;gap:6px;flex-wrap:wrap}
+.links a{font-size:.82rem;font-weight:700;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px}
+.links a.hot{color:var(--accent-fg);background:var(--accent);border-color:var(--accent)}
+.after{border:2px solid var(--accent)}
+.after[hidden]{display:none}
+.foot a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.free{display:inline-block;background:var(--accent);color:var(--accent-fg);font-size:.75rem;font-weight:900;border-radius:5px;padding:1px 7px;margin-left:6px;vertical-align:3px}
+input[lang="ko"]{ime-mode:active}
+.tip{border:1px solid var(--accent);border-radius:8px;padding:9px 11px;font-size:.88rem;font-weight:700;color:var(--accent);margin:0}
+.tip[hidden]{display:none}
+.after .go{display:block;text-decoration:none;border-radius:8px;padding:11px 13px;font-weight:700;line-height:1.35}
+.after .go.app{background:var(--accent);color:var(--accent-fg)}
+.after .go.pro{border:1px solid var(--accent);color:var(--accent)}
+.after .go small{display:block;font-weight:400;font-size:.8rem;opacity:.9}
+
+/* ── 잠금 화면 ── */
+#gate{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:10;padding:16px}
+#gate form{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;gap:12px;width:min(320px,100%)}
+#gate h1{font-size:1.15rem;margin:0}
+#gate input{font-size:1.3rem;letter-spacing:.3em;text-align:center}
+#gate .err{color:var(--accent);font-size:.85rem;min-height:1.2em;margin:0}
+body.locked .wrap{display:none}
+body:not(.locked) #gate{display:none}
+
+/* ── 종이 (PC판 거래명세서와 같은 모양) ── */
+.sheetbox{min-width:0;overflow:hidden}
+.scaler{transform-origin:0 0}
+.paper{background:#fff;color:#111;width:186mm;padding:0;font-family:var(--f-body);font-size:9.6pt;line-height:1.15;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.screenpaper{background:#fff;padding:6mm;box-shadow:0 1px 8px rgba(0,0,0,.2);width:calc(186mm + 12mm)}
+.copy{--c:#e8343f;--s:#fbe5ec;--h:#f8dbe4;border:2px solid var(--c);color:#111}
+.copy.blue{--c:#3a8fd3;--s:#e3f0fa;--h:#d6e8f6}
+.copy + .copy{margin-top:9mm}
+.copy table{border-collapse:collapse;width:100%;table-layout:fixed}
+.copy td,.copy th{border:1px solid var(--c);padding:0 1.3mm;vertical-align:middle;overflow:hidden;white-space:nowrap}
+.copy th{color:var(--c);font-weight:700;text-align:center}
+.lb{color:var(--c);font-weight:700;letter-spacing:.35em;text-align:center}
+.top{height:13.5mm;display:grid;grid-template-columns:28% 44% 28%;align-items:center;border-bottom:2px solid var(--c);padding:0 0 0 7mm}
+.top .no,.top .dt{border-bottom:1px solid var(--c);padding:0 1mm .6mm;font-size:11pt;margin-right:6mm}
+.top .no b,.top .dt b{color:var(--c);font-weight:700}
+.top .ttl{text-align:center;justify-self:center;border-bottom:1px solid var(--c);padding:0 2mm .3mm;white-space:nowrap}
+.top .ttl b{color:var(--c);font-size:18pt;font-weight:700;letter-spacing:.32em}
+.top .ttl span{color:var(--c);font-size:9pt;font-weight:700;margin-left:-1mm}
+.party td{height:4.2mm;font-size:9.4pt}
+.party tr.r2 td{height:8.6mm}
+.party .big{font-size:14.5pt;line-height:1.05}
+.party .bank{display:block;font-size:7.6pt;line-height:1.1}
+.party .vside{color:var(--c);font-weight:700;text-align:center;white-space:normal;line-height:2.2;padding:0}
+.party .lb{font-size:9.6pt;padding:0;letter-spacing:.25em}
+.party .lb.tight{letter-spacing:0;font-size:9pt}
+.party .tel{float:right;margin-right:6mm}
+.items{border-top:2px solid var(--c)}
+.items thead th{background:var(--h);height:6.6mm;font-size:11pt;letter-spacing:.25em;border-bottom:1.5px solid var(--c)}
+.items tbody td{height:4.35mm;font-size:9.6pt;border-top:0;border-bottom:0}
+.items tbody tr:nth-child(even) td.st{background:var(--s)}
+.items tbody td.n{text-align:right;font-variant-numeric:tabular-nums}
+.items tbody td.c{text-align:center}
+.items .bigo{padding:0;vertical-align:top;border-bottom:0}
+.bigo div{height:100%;display:grid;grid-template-rows:25% 4.3mm 30% 4.3mm 1fr}
+.bigo span{color:var(--c);font-weight:700;display:flex;justify-content:space-between;padding:0 1mm;border-bottom:1px solid var(--c);font-size:10pt}
+.sum{border-top:1.5px solid var(--c)}
+.sum td{height:4.4mm;font-variant-numeric:tabular-nums}
+.sum .kv{display:flex;justify-content:space-between}
+.sum th{font-size:9.4pt;letter-spacing:.15em;background:var(--h);font-weight:700}
+.sum .gye{background:var(--h);color:var(--c);font-size:15pt;font-weight:700}
+.sum td.n{text-align:right}
+.sum tr.r3 td{height:8mm;font-size:11pt}
+.sum tr.r3 .lb{background:var(--h);font-size:11pt;letter-spacing:.2em;padding:0}
+.foot{text-align:right;color:#e8343f;font-weight:900;font-size:11.5pt;margin-top:2mm;letter-spacing:-.01em}
+
+@page{size:A4;margin:9mm 12mm}
+@media print{
+  body{background:#fff;padding:0}
+  .noprint,#gate{display:none!important}
+  .wrap{display:block;max-width:none}
+  .sheetbox{position:static;overflow:visible;height:auto!important}
+  .scaler{transform:none!important;height:auto!important}
+  .screenpaper{box-shadow:none;padding:0;width:186mm}
+  .foot a{text-decoration:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<div id="gate">
+  <form id="gateform" autocomplete="off">
+    <h1>바로 찍는 거래명세서</h1>
+    <p class="note">시험판입니다. 받은 비밀번호를 넣어 주세요.</p>
+    <input id="pw" type="password" inputmode="numeric" maxlength="12" aria-label="비밀번호">
+    <p class="err" id="gerr"></p>
+    <button class="primary" type="submit">열기</button>
+  </form>
+</div>
+
+<div class="wrap">
+  <header class="noprint">
+    <div class="topbar"><h1>바로 찍는 거래명세서<span class="free">무료</span></h1>
+      <nav class="links"><a id="install" href="#" hidden>앱으로 설치</a><a id="l_blog" href="https://blog.naver.com/jccom78" target="_blank" rel="noopener">블로그</a><a id="l_get" class="hot getlink" href="https://blog.naver.com/jccom78/224453126061" target="_blank" rel="noopener">판매왕 프로 5.0 무료 받기</a></nav></div>
+    <p>설치 없이 휴대폰·PC 브라우저에서 바로 찍습니다. 칸을 채우면 종이가 바로 바뀌고, 마지막에 만든 한 장은 이 기기에 기억되어 다음에 열면 그대로 나옵니다.</p>
+  </header>
+
+  <div class="side noprint">
+    <section class="card">
+      <h2>장 번호·날짜</h2>
+      <div class="grid2">
+        <label>NO<input id="no" inputmode="numeric"></label>
+        <label>작성일<input id="date" type="date"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>공급자 <small>· 우리 가게</small></h2>
+      <div class="grid2">
+        <label>등록번호<input id="s_no" inputmode="numeric" placeholder="000-00-00000"></label>
+        <label>상호<input id="s_name" lang="ko"></label>
+        <label>대표자<input id="s_ceo" lang="ko"></label>
+        <label>전화<input id="s_tel" inputmode="tel"></label>
+        <label class="full">주소<input id="s_addr" lang="ko"></label>
+        <label class="full">계좌 <small>(상호 아래 작게 찍힘, 비워도 됨)</small><input id="s_bank" lang="ko" placeholder="○○은행 000-00-000000 예금주"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>거래처 <small>· 받는 곳</small></h2>
+      <div class="grid2">
+        <label class="full">상호<input id="b_name" lang="ko"></label>
+        <label class="full">주소<input id="b_addr" lang="ko"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>품목 <small>· 한 장에 16줄</small></h2>
+      <label>부가세<select id="vat"><option value="sep">별도 (공급가액에 10% 더함)</option><option value="inc">포함 (금액 안에 들어 있음)</option><option value="none">없음 (면세)</option></select></label>
+      <div id="items" style="display:grid;gap:8px"></div>
+      <div class="row"><button id="add" type="button">+ 품목 추가</button><span class="note" id="cnt"></span></div>
+    </section>
+
+    <section class="card">
+      <h2>미수금</h2>
+      <div class="grid2">
+        <label>전미수<input id="prev" inputmode="numeric"></label>
+        <label>입금액<input id="paid" inputmode="numeric"></label>
+      </div>
+      <p class="note">미수잔액 = 전미수 + 합계 − 입금액</p>
+    </section>
+
+    <section class="card">
+      <label>찍는 모양<select id="copies"><option value="2">A4 한 장에 두 벌 (공급자용 빨강 + 공급받는자용 파랑)</option><option value="1">공급받는자용 한 벌만</option></select></label>
+      <p class="tip" id="phonetip" hidden>휴대폰에서 종이로 찍으시려면 먼저 휴대폰에 프린터를 연결해 주세요. 프린터가 연결되어 있지 않으면 「PDF로 저장」만 나옵니다.</p>
+      <div class="row">
+        <button class="primary" id="print" type="button">인쇄 / PDF 저장</button>
+        <button id="fresh" type="button">새로 쓰기</button>
+      </div>
+      <p class="note">「새로 쓰기」는 우리 가게 정보만 남기고 거래처·품목·미수금을 비우며, NO를 하나 올립니다.</p>
+      <p class="saved" id="saved"></p>
+    </section>
+
+    <section class="card after" id="after" hidden>
+      <h2>다 찍으셨나요?</h2>
+      <a class="go app" id="getapp" href="https://jccom777.github.io/panmaewang-pro/mobile/" target="_blank" rel="noopener">이 거래명세서 앱 무료 받기 →<small>홈 화면에 아이콘이 생겨, 다음부터 한 번에 열립니다.</small></a>
+      <a class="go pro getlink" href="https://blog.naver.com/jccom78/224453126061" target="_blank" rel="noopener">판매왕 프로 5.0 PC용 무료 받기 →<small>거래처 장부·재고·미수금까지 관리하려면. 처음부터 끝까지 무료입니다.</small></a>
+    </section>
+
+    <section class="card pc">
+      <h2>거래처 장부·재고·미수금까지 관리하려면</h2>
+      <p class="note"><b>판매왕 프로 5.0</b>은 PC용이고 <b>무료</b>입니다. 이 종이와 같은 거래명세서가 찍히고, 거래처별 장부와 재고가 저절로 정리됩니다.<br>
+      <a class="getlink" href="https://blog.naver.com/jccom78/224453126061" target="_blank" rel="noopener">판매왕 프로 5.0 PC용 무료 받기</a></p>
+    </section>
+  </div>
+
+  <div class="sheetbox" id="sheetbox"><div class="scaler" id="scaler"><div class="screenpaper"><div class="paper" id="paper"></div></div></div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEY="pm_last_v1", OK="pm_ok_v1";
+const LOCK="1b62521c8d6da41083615bf806ab9f60cbb98b5dfe3615d57be57a6d060a675e";
+const FOOT_DEFAULT="무료프로그램 문의 1600-7709 파워인포주식회사";
+let foot=FOOT_DEFAULT;
+// 링크: 기본값. 깃허브 settings.ini 의 [링크] 블로그= / 받기= 가 있으면 그것으로 바꾼다.
+const LINK={blog:"https://blog.naver.com/jccom78",get:"https://blog.naver.com/jccom78/224453126061"};
+// 맨 아래 문구: 전화번호는 전화 걸기, 나머지 글씨는 받기 글로 간다 (종이에는 글씨만 찍힘)
+function footHTML(){const g=`<a href="${esc(LINK.get)}" target="_blank" rel="noopener">`;
+  return esc(foot).split("1600-7709").map(s=>s?g+s+"</a>":"").join('<a href="tel:16007709">1600-7709</a>')}
+const FIELDS=["no","date","s_no","s_name","s_ceo","s_tel","s_addr","s_bank","b_name","b_addr","vat","prev","paid","copies"];
+const ROWS=16;
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const numv=v=>parseFloat(String(v??"").replace(/[^0-9.\-]/g,""))||0;
+const won=n=>Math.round(n).toLocaleString("ko-KR");
+const store=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const load=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const today=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const stamp=()=>new Date(Date.now()+9*3600e3).toISOString().slice(11,19).replace(/:/g,"");
+
+// ── 잠금: 비밀번호 자체는 적지 않고 해시만 맞춰 본다. 한 번 열면 이 기기는 기억한다. ──
+// 받은 파일로 열 때는 crypto.subtle 이 없는 브라우저가 있어 직접 계산한다
+function sha(t){const K=[],H=[];let n=2;for(let c=0;c<64;n++){let p=1;for(let d=2;d*d<=n;d++)if(n%d===0){p=0;break}
+    if(p){if(c<8)H[c]=(Math.pow(n,1/2)*2**32)|0;K[c++]=(Math.pow(n,1/3)*2**32)|0}}
+  const b=[...new TextEncoder().encode(t)],L=b.length*8;b.push(128);while(b.length%64!==56)b.push(0);
+  for(let i=7;i>=0;i--)b.push(i>3?0:(L>>>(i*8))&255);
+  const r=(x,s)=>(x>>>s)|(x<<(32-s));
+  for(let o=0;o<b.length;o+=64){const w=[];for(let i=0;i<64;i++){
+      if(i<16)w[i]=(b[o+i*4]<<24)|(b[o+i*4+1]<<16)|(b[o+i*4+2]<<8)|b[o+i*4+3];
+      else{const a=w[i-15],e=w[i-2];w[i]=(w[i-16]+(r(a,7)^r(a,18)^(a>>>3))+w[i-7]+(r(e,17)^r(e,19)^(e>>>10)))|0}}
+    let[a,c,d,e,f,g,h,k]=H;
+    for(let i=0;i<64;i++){const t1=(k+(r(f,6)^r(f,11)^r(f,25))+((f&g)^(~f&h))+K[i]+w[i])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&c)^(a&d)^(c&d)))|0;
+      k=h;h=g;g=f;f=(e+t1)|0;e=d;d=c;c=a;a=(t1+t2)|0}
+    [a,c,d,e,f,g,h,k].forEach((v,i)=>H[i]=(H[i]+v)|0)}
+  return H.map(v=>(v>>>0).toString(16).padStart(8,"0")).join("")}
+if(load(OK)===LOCK)document.body.classList.remove("locked");else document.body.classList.add("locked");
+$("gateform").onsubmit=async e=>{e.preventDefault();
+  let h="";try{h=await sha("panmaewang:"+$("pw").value.trim())}catch(err){}
+  if(h===LOCK){store(OK,LOCK);document.body.classList.remove("locked");fit()}
+  else{$("gerr").textContent="비밀번호가 맞지 않습니다.";$("pw").select()}};
+
+// ── 품목 줄 ──
+function itemRow(it={}){
+  const d=document.createElement("div");d.className="item";
+  d.innerHTML=`<label class="name">품명<input data-k="name" lang="ko" value="${esc(it.name)}"></label>
+  <label class="spec">규격<input data-k="spec" lang="ko" value="${esc(it.spec)}"></label>
+  <label>수량<input data-k="qty" inputmode="decimal" value="${esc(it.qty)}"></label>
+  <label>단가<input data-k="price" inputmode="numeric" value="${esc(it.price)}"></label>
+  <button type="button" aria-label="이 품목 지우기">✕</button>`;
+  d.querySelector("button").onclick=()=>{d.remove();render()};
+  d.addEventListener("input",render);
+  $("items").appendChild(d);
+}
+const items=()=>[...$("items").children].map(r=>{const o={};r.querySelectorAll("input").forEach(i=>o[i.dataset.k]=i.value.trim());return o});
+const filled=()=>items().filter(o=>o.name||o.qty||o.price);
+
+// ── 종이 한 벌 ──
+function copyHTML(blue,v,rows,t){
+  let body="";
+  for(let i=0;i<ROWS;i++){const r=rows[i];
+    body+=`<tr><td class="c st">${r?i+1:""}</td><td class="st">${r?esc(r.name):""}</td><td class="st" colspan="2">${r?esc(r.spec):""}</td>
+      <td class="n st">${r&&r.qty!==""?esc(won(numv(r.qty))):""}</td><td class="n st">${r&&r.price!==""?won(numv(r.price)):""}</td><td class="n st">${r?won(r.amt):""}</td>
+      ${i===0?`<td class="bigo" rowspan="${ROWS}"><div><i></i><span><b>인</b><b>수</b></span><i></i><span><b>확</b><b>인</b></span><i></i></div></td>`:""}</tr>`;}
+  return `<div class="copy${blue?" blue":""}">
+  <div class="top"><div class="no"><b>NO,</b> ${esc(v.no)}</div>
+    <div class="ttl"><b>거래명세서</b><span>(${blue?"공급받는자용":"공급자용"})</span></div>
+    <div class="dt"><b>작성일:</b> ${esc(v.date)}</div></div>
+  <table class="party"><colgroup><col style="width:6.67%"><col style="width:49.3%"><col style="width:4%"><col style="width:8.2%"><col></colgroup>
+    <tr><td class="lb tight">전표No.</td><td>${esc(v.slip)}</td><td class="vside" rowspan="4">공<br>급<br>자</td><td class="lb tight">등록번호</td><td>${esc(v.s_no)}</td></tr>
+    <tr class="r2"><td class="lb">상호</td><td class="big">${esc(v.b_name)}</td><td class="lb">상호</td><td><span class="big">${esc(v.s_name)}</span>${v.s_bank?`<span class="bank">${esc(v.s_bank)}</span>`:""}</td></tr>
+    <tr><td class="lb" rowspan="2">주소</td><td rowspan="2">${esc(v.b_addr)}</td><td class="lb tight">대 표 자</td><td>${esc(v.s_ceo)}<span class="tel">${v.s_tel?"(Tel) "+esc(v.s_tel):""}</span></td></tr>
+    <tr><td class="lb">주소</td><td>${esc(v.s_addr)}</td></tr>
+  </table>
+  <table class="items"><colgroup><col style="width:6.67%"><col style="width:26.85%"><col style="width:8.95%"><col style="width:12.79%"><col style="width:10.32%"><col style="width:12.97%"><col style="width:14.89%"><col></colgroup>
+    <thead><tr><th>순번</th><th>품&emsp;&emsp;명</th><th colspan="2">규&emsp;&emsp;격</th><th>수량</th><th>단가</th><th>금&emsp;액</th><th>비고</th></tr></thead>
+    <tbody>${body}</tbody></table>
+  <table class="sum"><colgroup><col style="width:6.67%"><col style="width:26.85%"><col style="width:8.95%"><col style="width:12.79%"><col style="width:10.32%"><col style="width:12.97%"><col style="width:7.76%"><col></colgroup>
+    <tr><td colspan="2"><div class="kv"><span>매출</span><span>${won(t.sup)}</span></div></td><td class="gye" colspan="2" rowspan="2" style="text-align:center">계</td>
+      <th>공급가액</th><th>세&ensp;액</th><th style="letter-spacing:0">수량합계</th><th>합&ensp;계</th></tr>
+    <tr><td colspan="2"><div class="kv"><span>반입</span><span>0</span></div></td><td class="n">${won(t.sup)}</td><td class="n">${won(t.tax)}</td><td class="n">${won(t.qty)}</td><td class="n">${won(t.sum)}</td></tr>
+    <tr class="r3"><td class="lb" style="letter-spacing:0">전미수</td><td class="n">${won(t.prev)}</td><td class="lb">입금액</td><td class="n" colspan="2">${won(t.paid)}</td>
+      <td class="lb">미수잔액</td><td class="n" colspan="2">${won(t.rest)}</td></tr>
+  </table></div>`;
+}
+
+let state={};
+function render(){
+  FIELDS.forEach(k=>state[k]=$(k).value.trim());
+  state.items=items();
+  const rows=filled().slice(0,ROWS).map(r=>({...r,amt:numv(r.qty)*numv(r.price)}));
+  const total=rows.reduce((a,r)=>a+r.amt,0);
+  let sup=total,tax=0;
+  if(state.vat==="sep")tax=Math.round(total*0.1);
+  else if(state.vat==="inc"){sup=Math.round(total/1.1);tax=total-sup;}
+  const t={sup,tax,sum:sup+tax,qty:rows.reduce((a,r)=>a+numv(r.qty),0),prev:numv(state.prev),paid:numv(state.paid)};
+  t.rest=t.prev+t.sum-t.paid;
+  const v={...state,slip:state.slip||""};
+  $("paper").innerHTML=(state.copies==="1"?"":copyHTML(false,v,rows,t))+copyHTML(true,v,rows,t)+`<div class="foot">${footHTML()}</div>`;
+  const n=filled().length;$("cnt").textContent=n>ROWS?`${n}줄 가운데 ${ROWS}줄만 찍힙니다.`:`${n}/${ROWS}줄`;
+  store(KEY,JSON.stringify(state));
+  $("saved").textContent="이 기기에 저장됨 · "+new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"});
+  fit();
+}
+
+// 화면 폭에 맞게 종이를 줄여 보여 준다 (인쇄는 실제 크기)
+function fit(){const box=$("sheetbox"),sc=$("scaler"),pp=sc.firstElementChild;
+  sc.style.transform="none";const w=pp.offsetWidth,h=pp.offsetHeight,bw=box.clientWidth;
+  const k=Math.min(1,bw/w);sc.style.transform=`scale(${k})`;sc.style.height=(h*k)+"px";box.style.height=(h*k)+"px"}
+addEventListener("resize",fit);
+
+function apply(s){
+  FIELDS.forEach(k=>{if(s[k]!==undefined)$(k).value=s[k]});
+  state.slip=s.slip||"";
+  $("items").innerHTML="";(s.items&&s.items.length?s.items:[{}]).forEach(itemRow);
+}
+const example={no:"001",date:today(),s_no:"123-45-67890",s_name:"예시상사",s_ceo:"홍길동",s_tel:"010-1234-5678",
+  s_addr:"서울 중구 예시동 예시로 12",s_bank:"예시은행 000-00-000000 예시상사",b_name:"(주)예시거래처",b_addr:"경기 수원시 예시구 예시대로 345",
+  vat:"sep",prev:"0",paid:"0",copies:"2",
+  items:[{name:"예시 품목 A",spec:"500매",qty:"10",price:"4500"},{name:"예시 품목 B",spec:"12개입",qty:"5",price:"6000"},{name:"예시 품목 C",spec:"10권",qty:"20",price:"3800"}]};
+let saved=null;try{saved=JSON.parse(load(KEY)||"null")}catch(e){}
+apply(saved||example);
+if(!state.slip)state.slip=$("date").value.replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();
+
+document.querySelectorAll(".side input:not([data-k]), .side select").forEach(e=>e.addEventListener("input",render));
+$("add").onclick=()=>{itemRow();render()};
+$("fresh").onclick=()=>{
+  if(!confirm("거래처·품목·미수금을 비우고 새 장을 씁니다. 지금 장은 지워집니다. 계속할까요?"))return;
+  ["b_name","b_addr"].forEach(k=>$(k).value="");$("prev").value="0";$("paid").value="0";
+  $("no").value=String(numv($("no").value)+1).padStart(3,"0");$("date").value=today();
+  $("items").innerHTML="";itemRow();
+  state.slip=$("date").value.replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();render()};
+$("print").onclick=()=>window.print();
+addEventListener("afterprint",()=>{$("after").hidden=false});
+// 휴대폰은 프린터를 먼저 연결해야 종이로 나간다 (안 하면 PDF 저장만 뜬다)
+if(matchMedia("(pointer:coarse)").matches)$("phonetip").hidden=false;
+
+// 엔터를 누르면 다음 칸으로 (품목 마지막 칸에서는 다음 품목, 없으면 새 품목)
+const nextable=()=>[...document.querySelectorAll(".side input:not([type=date]), .side select")];
+document.querySelector(".side").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"||e.isComposing||!e.target.matches("input"))return;
+  e.preventDefault();
+  if(e.target.dataset.k==="price"&&!e.target.closest(".item").nextElementSibling&&filled().length<ROWS){itemRow();render()}
+  const all=nextable(),i=all.indexOf(e.target),n=all[i+1];
+  if(n){n.focus();if(n.select)n.select()}else e.target.blur()});
+new MutationObserver(()=>document.querySelectorAll(".side input").forEach(i=>i.enterKeyHint="next")).observe($("items"),{childList:true});
+document.querySelectorAll(".side input").forEach(i=>i.enterKeyHint="next");
+
+// 앱 받기: 설치 창을 띄울 수 있으면 띄우고, 이미 앱 주소에 있으면 홈 화면에 추가하는 법을 알려 준다
+const APP="https://jccom777.github.io/panmaewang-pro/mobile/";
+if(matchMedia("(display-mode: standalone)").matches||navigator.standalone)$("getapp").hidden=true;
+$("getapp").onclick=async e=>{
+  if(installEv){e.preventDefault();installEv.prompt();await installEv.userChoice;installEv=null;$("install").hidden=true;return}
+  if(location.href.startsWith(APP)){e.preventDefault();
+    alert(/iPhone|iPad/.test(navigator.userAgent)?"아래 공유 단추(□↑)를 누르고 「홈 화면에 추가」를 누르세요.":"브라우저 오른쪽 위 ⋮ 메뉴에서 「홈 화면에 추가」 또는 「앱 설치」를 누르세요.")}};
+
+// 홈 화면 앱: 인터넷 주소(https)로 열었을 때만 켠다. 받은 파일로 열면 그냥 지나간다.
+if(location.protocol.startsWith("http")&&"serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+let installEv=null;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEv=e;$("install").hidden=false});
+$("install").onclick=async e=>{e.preventDefault();if(!installEv)return;installEv.prompt();await installEv.userChoice;installEv=null;$("install").hidden=true};
+render();
+if(document.fonts)document.fonts.ready.then(fit);
+
+// 맨 아래 문구: 깃허브 settings.ini 의 [인쇄] 맨아래문구 (판매왕 프로 PC판과 같은 곳). 1600-7709는 늘 들어간다.
+fetch("https://raw.githubusercontent.com/jccom777/panmaewang-pro/main/settings.ini",{cache:"no-store"})
+  .then(r=>r.ok?r.text():"").then(t=>{
+    const u=k=>{const x=t.match(new RegExp("^\\s*"+k+"\\s*=\\s*(https?://\\S+)","m"));return x&&x[1]};
+    if(u("블로그"))LINK.blog=u("블로그");if(u("받기"))LINK.get=u("받기");
+    $("l_blog").href=LINK.blog;$("l_get").href=LINK.get;document.querySelectorAll(".getlink").forEach(a=>a.href=LINK.get);
+    const m=t.match(/^\s*맨아래문구\s*=\s*(.+)$/m);
+    if(m&&m[1].trim()){foot=m[1].trim();if(!/1600-7709/.test(foot))foot+=" · "+FOOT_DEFAULT;render();}})
+  .catch(()=>{});
+</script>
+</body></html>
