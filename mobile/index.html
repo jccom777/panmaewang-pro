@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>바로 찍는 거래명세서</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script async src="https://www.googletagmanager.com/gtag/js?id=G-214WMY688K"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-214WMY688K",{allow_google_signals:false,allow_ad_personalization_signals:false});</script><title>바로 찍는 거래명세서</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -189,7 +189,7 @@ input[lang="ko"]{ime-mode:active}
         <button id="fresh" type="button">새로 쓰기</button>
       </div>
       <p class="note">「새로 쓰기」는 우리 가게 정보만 남기고 거래처·품목·미수금을 비우며, NO를 하나 올립니다.</p>
-      <p class="saved" id="saved"></p>
+      <p class="saved" id="saved"></p><p class="note">방문 통계를 위해 구글 애널리틱스를 씁니다. 쓰신 내용은 이 기기에만 저장되고 보내지 않습니다.</p>
     </section>
 
     <section class="card after" id="after" hidden>
@@ -318,8 +318,13 @@ $("fresh").onclick=()=>{
   $("no").value=String(numv($("no").value)+1).padStart(3,"0");$("date").value=today();
   $("items").innerHTML="";itemRow();
   state.slip=$("date").value.replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();render()};
-$("print").onclick=()=>window.print();
+// 집계: 공개판에만 구글 애널리틱스가 붙는다. 단추 이름만 세고, 쓴 내용은 보내지 않는다. 받은 파일판은 그냥 지나간다.
+const ga=n=>{if(window.gtag)gtag("event",n)};
+$("print").onclick=()=>{ga("print_click");window.print()};
+addEventListener("beforeprint",()=>ga("print_open"));
 addEventListener("afterprint",()=>{$("after").hidden=false});
+addEventListener("appinstalled",()=>ga("app_installed"));
+document.querySelectorAll(".getlink").forEach(a=>a.addEventListener("click",()=>ga("get_pro_click")));
 // 휴대폰은 프린터를 먼저 연결해야 종이로 나간다 (안 하면 PDF 저장만 뜬다)
 if(matchMedia("(pointer:coarse)").matches)$("phonetip").hidden=false;
 
@@ -336,8 +341,9 @@ document.querySelectorAll(".side input").forEach(i=>i.enterKeyHint="next");
 
 // 앱 받기: 설치 창을 띄울 수 있으면 띄우고, 이미 앱 주소에 있으면 홈 화면에 추가하는 법을 알려 준다
 const APP="https://jccom777.github.io/panmaewang-pro/mobile/";
-if(matchMedia("(display-mode: standalone)").matches||navigator.standalone)$("getapp").hidden=true;
+if(matchMedia("(display-mode: standalone)").matches||navigator.standalone){$("getapp").hidden=true;ga("open_home_app")}
 $("getapp").onclick=async e=>{
+  ga("get_app_click");
   if(installEv){e.preventDefault();installEv.prompt();await installEv.userChoice;installEv=null;$("install").hidden=true;return}
   if(location.href.startsWith(APP)){e.preventDefault();
     alert(/iPhone|iPad/.test(navigator.userAgent)?"아래 공유 단추(□↑)를 누르고 「홈 화면에 추가」를 누르세요.":"브라우저 오른쪽 위 ⋮ 메뉴에서 「홈 화면에 추가」 또는 「앱 설치」를 누르세요.")}};
