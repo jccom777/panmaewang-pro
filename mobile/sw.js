@@ -1,6 +1,6 @@
-﻿// 바로 찍는 거래명세서: 인터넷이 끊겨도 열리게 앱 파일을 기기에 담아 둔다.
+// 바로 찍는 거래명세서: 인터넷이 끊겨도 열리게 앱 파일을 기기에 담아 둔다.
 // 고친 판을 올리면 인터넷이 될 때 새 판을 먼저 받는다 (못 받으면 담아 둔 판).
-const CACHE = "barobill-v4";
+const CACHE = "barobill-v5";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

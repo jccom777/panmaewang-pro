@@ -133,7 +133,8 @@ input[lang="ko"]{ime-mode:active}
   <header class="noprint">
     <div class="topbar"><h1>바로 찍는 거래명세서<span class="free">무료</span></h1>
       <nav class="links"><a id="install" href="#" hidden>앱으로 설치</a><a id="l_blog" href="https://blog.naver.com/jccom78" target="_blank" rel="noopener">블로그</a><a id="l_get" class="hot getlink" href="https://blog.naver.com/jccom78/224453126061" target="_blank" rel="noopener">판매왕 프로 5.0 무료 받기</a></nav></div>
-    <p>설치 없이 휴대폰·PC 브라우저에서 바로 찍습니다. 칸을 채우면 종이가 바로 바뀌고, 마지막에 만든 한 장은 이 기기에 기억되어 다음에 열면 그대로 나옵니다.</p>
+    <p>설치 없이 휴대폰·PC 브라우저에서 바로 찍습니다. 공란을 작성하면 종이에 바로 나타납니다. 공란 그대로 인쇄하셔도 됩니다. 마지막에 만든 한 장은 이 기기에 기억되어 다음에 열면 그대로 나옵니다.</p>
+    <p class="tip" id="inapptip" hidden>이 화면에서는 인쇄가 안 될 수 있습니다. 크롬이나 사파리로 열어 주세요.</p>
   </header>
 
   <div class="side noprint">
@@ -146,9 +147,9 @@ input[lang="ko"]{ime-mode:active}
     </section>
 
     <section class="card">
-      <h2>공급자 <small>· 우리 가게</small></h2>
+      <h2>공급자 <small>· 우리 회사</small></h2>
       <div class="grid2">
-        <label>등록번호<input id="s_no" inputmode="numeric" placeholder="000-00-00000"></label>
+        <label>사업자 등록번호<input id="s_no" inputmode="numeric" placeholder="000-00-00000"></label>
         <label>상호<input id="s_name" lang="ko"></label>
         <label>대표자<input id="s_ceo" lang="ko"></label>
         <label>전화<input id="s_tel" inputmode="tel"></label>
@@ -188,8 +189,9 @@ input[lang="ko"]{ime-mode:active}
         <button class="primary" id="print" type="button">인쇄 / PDF 저장</button>
         <button id="fresh" type="button">새로 쓰기</button>
       </div>
-      <p class="note">「새로 쓰기」는 우리 가게 정보만 남기고 거래처·품목·미수금을 비우며, NO를 하나 올립니다.</p>
-      <p class="saved" id="saved"></p><p class="note">방문 통계를 위해 구글 애널리틱스를 씁니다. 쓰신 내용은 이 기기에만 저장되고 보내지 않습니다.</p>
+      <p class="note">「새로 쓰기」는 우리 회사 정보만 남기고 거래처·품목·미수금을 비우며, NO를 하나 올립니다.</p>
+      <p class="saved" id="saved"></p>
+      <p class="note">방문 통계를 위해 구글 애널리틱스를 씁니다. 쓰신 내용은 이 기기에만 저장되고 보내지 않습니다.</p>
     </section>
 
     <section class="card after" id="after" hidden>
@@ -242,9 +244,13 @@ function itemRow(it={}){
 }
 const items=()=>[...$("items").children].map(r=>{const o={};r.querySelectorAll("input").forEach(i=>o[i.dataset.k]=i.value.trim());return o});
 const filled=()=>items().filter(o=>o.name||o.qty||o.price);
+// 거래 내용이 있는가 / 우리 회사까지 전부 비었는가 (우리 회사만 채운 종이는 상호 박힌 수기 용지로 본다)
+const hasDoc=()=>filled().length>0||["b_name","b_addr"].some(k=>$(k).value.trim())||numv($("prev").value)!==0||numv($("paid").value)!==0;
+const isBlank=()=>!hasDoc()&&!["s_no","s_name","s_ceo","s_tel","s_addr","s_bank"].some(k=>$(k).value.trim());
 
 // ── 종이 한 벌 ──
 function copyHTML(blue,v,rows,t){
+  const z=n=>t.none?"":won(n); // 금액이 하나도 없으면 손으로 쓰게 0도 찍지 않는다
   let body="";
   for(let i=0;i<ROWS;i++){const r=rows[i];
     body+=`<tr><td class="c st">${r?i+1:""}</td><td class="st">${r?esc(r.name):""}</td><td class="st" colspan="2">${r?esc(r.spec):""}</td>
@@ -264,11 +270,11 @@ function copyHTML(blue,v,rows,t){
     <thead><tr><th>순번</th><th>품&emsp;&emsp;명</th><th colspan="2">규&emsp;&emsp;격</th><th>수량</th><th>단가</th><th>금&emsp;액</th><th>비고</th></tr></thead>
     <tbody>${body}</tbody></table>
   <table class="sum"><colgroup><col style="width:6.67%"><col style="width:26.85%"><col style="width:8.95%"><col style="width:12.79%"><col style="width:10.32%"><col style="width:12.97%"><col style="width:7.76%"><col></colgroup>
-    <tr><td colspan="2"><div class="kv"><span>매출</span><span>${won(t.sup)}</span></div></td><td class="gye" colspan="2" rowspan="2" style="text-align:center">계</td>
+    <tr><td colspan="2"><div class="kv"><span>매출</span><span>${z(t.sup)}</span></div></td><td class="gye" colspan="2" rowspan="2" style="text-align:center">계</td>
       <th>공급가액</th><th>세&ensp;액</th><th style="letter-spacing:0">수량합계</th><th>합&ensp;계</th></tr>
-    <tr><td colspan="2"><div class="kv"><span>반입</span><span>0</span></div></td><td class="n">${won(t.sup)}</td><td class="n">${won(t.tax)}</td><td class="n">${won(t.qty)}</td><td class="n">${won(t.sum)}</td></tr>
-    <tr class="r3"><td class="lb" style="letter-spacing:0">전미수</td><td class="n">${won(t.prev)}</td><td class="lb">입금액</td><td class="n" colspan="2">${won(t.paid)}</td>
-      <td class="lb">미수잔액</td><td class="n" colspan="2">${won(t.rest)}</td></tr>
+    <tr><td colspan="2"><div class="kv"><span>반입</span><span>${z(0)}</span></div></td><td class="n">${z(t.sup)}</td><td class="n">${z(t.tax)}</td><td class="n">${z(t.qty)}</td><td class="n">${z(t.sum)}</td></tr>
+    <tr class="r3"><td class="lb" style="letter-spacing:0">전미수</td><td class="n">${z(t.prev)}</td><td class="lb">입금액</td><td class="n" colspan="2">${z(t.paid)}</td>
+      <td class="lb">미수잔액</td><td class="n" colspan="2">${z(t.rest)}</td></tr>
   </table></div>`;
 }
 
@@ -283,7 +289,9 @@ function render(){
   else if(state.vat==="inc"){sup=Math.round(total/1.1);tax=total-sup;}
   const t={sup,tax,sum:sup+tax,qty:rows.reduce((a,r)=>a+numv(r.qty),0),prev:numv(state.prev),paid:numv(state.paid)};
   t.rest=t.prev+t.sum-t.paid;
-  const v={...state,slip:state.slip||""};
+  t.none=!rows.length&&!t.prev&&!t.paid;
+  if(hasDoc()&&!state.slip)state.slip=($("date").value||today()).replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();
+  const v={...state,slip:hasDoc()?state.slip:""};
   $("paper").innerHTML=(state.copies==="1"?"":copyHTML(false,v,rows,t))+copyHTML(true,v,rows,t)+`<div class="foot">${footHTML()}</div>`;
   const n=filled().length;$("cnt").textContent=n>ROWS?`${n}줄 가운데 ${ROWS}줄만 찍힙니다.`:`${n}/${ROWS}줄`;
   store(KEY,JSON.stringify(state));
@@ -302,13 +310,10 @@ function apply(s){
   state.slip=s.slip||"";
   $("items").innerHTML="";(s.items&&s.items.length?s.items:[{}]).forEach(itemRow);
 }
-const example={no:"001",date:today(),s_no:"123-45-67890",s_name:"예시상사",s_ceo:"홍길동",s_tel:"010-1234-5678",
-  s_addr:"서울 중구 예시동 예시로 12",s_bank:"예시은행 000-00-000000 예시상사",b_name:"(주)예시거래처",b_addr:"경기 수원시 예시구 예시대로 345",
-  vat:"sep",prev:"0",paid:"0",copies:"2",
-  items:[{name:"예시 품목 A",spec:"500매",qty:"10",price:"4500"},{name:"예시 품목 B",spec:"12개입",qty:"5",price:"6000"},{name:"예시 품목 C",spec:"10권",qty:"20",price:"3800"}]};
+// 처음 열면 공란이다. 예전 판의 예시가 기기에 남아 있으면 버린다.
 let saved=null;try{saved=JSON.parse(load(KEY)||"null")}catch(e){}
-apply(saved||example);
-if(!state.slip)state.slip=$("date").value.replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();
+if(saved&&saved.s_name==="예시상사")saved=null;
+apply(saved||{});
 
 document.querySelectorAll(".side input:not([data-k]), .side select").forEach(e=>e.addEventListener("input",render));
 $("add").onclick=()=>{itemRow();render()};
@@ -320,7 +325,20 @@ $("fresh").onclick=()=>{
   state.slip=$("date").value.replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();render()};
 // 집계: 공개판에만 구글 애널리틱스가 붙는다. 단추 이름만 세고, 쓴 내용은 보내지 않는다. 받은 파일판은 그냥 지나간다.
 const ga=n=>{if(window.gtag)gtag("event",n)};
-$("print").onclick=()=>{ga("print_click");window.print()};
+$("print").onclick=()=>{ga("print_click");
+  const b=isBlank();
+  if(b&&!confirm("공란 거래명세서를 인쇄합니다. 손으로 쓰실 용지가 필요하시면 「확인」을 눌러 주세요.\n\n공란을 작성하고 인쇄하시면 작성한 내용이 그대로 찍힙니다. 작성하시려면 「취소」를 눌러 주세요."))return;
+  if(hasDoc()&&!$("date").value){$("date").value=today();render()}
+  ga(b?"print_blank":"print_filled");window.print()};
+// 카카오톡·네이버 같은 앱 안 화면은 인쇄가 막혀 있어 바깥 브라우저로 넘긴다. 못 넘기는 곳은 안내만 띄운다.
+function outURL(ua,href){
+  if(/KAKAOTALK/i.test(ua))return "kakaotalk://web/openExternal?url="+encodeURIComponent(href);
+  if(/Android/i.test(ua)&&/; wv\)|NAVER\(inapp|FBAN|FBAV|Instagram|Line\/|DaumApps|BAND\//i.test(ua))return "intent://"+href.replace(/^https?:\/\//,"")+"#Intent;scheme=https;package=com.android.chrome;end";
+  return ""}
+const inApp=ua=>/KAKAOTALK|; wv\)|NAVER\(inapp|FBAN|FBAV|Instagram|Line\/|DaumApps|BAND\//i.test(ua);
+if(location.protocol.startsWith("http")&&inApp(navigator.userAgent)&&!matchMedia("(display-mode: standalone)").matches){
+  $("inapptip").hidden=false;ga("open_inapp");
+  const o=outURL(navigator.userAgent,location.href.split("#")[0]);if(o)setTimeout(()=>{location.href=o},300)}
 addEventListener("beforeprint",()=>ga("print_open"));
 addEventListener("afterprint",()=>{$("after").hidden=false});
 addEventListener("appinstalled",()=>ga("app_installed"));
