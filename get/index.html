@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>판매왕 프로 내려받기</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-214WMY688K"></script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
+gtag("js",new Date());
+gtag("config","G-214WMY688K",{allow_google_signals:false,allow_ad_personalization_signals:false});
+(function(){
+  var FILE="https://github.com/jccom777/panmaewang-pro/releases/latest/download/PanmaewangPro5.0_Setup.zip";
+  var m=/[?&]src=([^&#]*)/.exec(location.search);
+  var src=m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,40):"";
+  if(!src)src="none";
+  var gone=false;
+  function go(){if(gone)return;gone=true;location.replace(FILE);}
+  gtag("event","get_pro_click",{src:src,guide:"blog-"+src,transport_type:"beacon",event_callback:go});
+  setTimeout(go,1200);
+})();
+</script>
+<style>body{font-family:"Malgun Gothic",sans-serif;background:#fff;color:#222;text-align:center;padding:48px 16px}a{color:#0a58ca}</style>
+</head>
+<body>
+<p>판매왕 프로 설치 파일을 받는 중입니다…</p>
+<p>받기가 시작되지 않으면 <a href="https://github.com/jccom777/panmaewang-pro/releases/latest/download/PanmaewangPro5.0_Setup.zip">여기를 누르세요</a>.</p>
+<p><a href="https://jccom777.github.io/panmaewang-pro/">판매왕 프로 소개로 가기</a></p>
+</body>
+</html>
