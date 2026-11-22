@@ -17,6 +17,7 @@ gtag("config","G-214WMY688K",{allow_google_signals:false,allow_ad_personalizatio
   if(!src)src="none";
   var gone=false;
   function go(){if(gone)return;gone=true;location.replace(FILE);}
+  try { navigator.sendBeacon('https://jcc.tailfdab5d.ts.net/click?src=' + encodeURIComponent(src) + '&page=' + encodeURIComponent(location.href)); } catch (e) {}
   gtag("event","get_pro_click",{src:src,guide:"blog-"+src,transport_type:"beacon",event_callback:go});
   setTimeout(go,1200);
 })();
