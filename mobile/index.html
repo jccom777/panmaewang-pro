@@ -79,6 +79,10 @@ input[lang="ko"]{ime-mode:active}
 .copy{--c:#e8343f;--s:#fbe5ec;--h:#f8dbe4;border:2px solid var(--c);color:#111}
 .copy.blue{--c:#3a8fd3;--s:#e3f0fa;--h:#d6e8f6}
 .copy + .copy{margin-top:9mm}
+/* 두 벌 사이 자르는 선: 가운데 점선 + 작은 「절취선」 글자 (사장님 261125) */
+.cut{position:relative;height:9mm;display:flex;align-items:center}
+.cut::before{content:"";flex:1;border-top:1px dashed #8a8f99}
+.cut span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;padding:0 2.5mm;font-size:7pt;line-height:1;color:#8a8f99;letter-spacing:.4em;text-indent:.4em}
 .copy table{border-collapse:collapse;width:100%;table-layout:fixed}
 .copy td,.copy th{border:1px solid var(--c);padding:0 1.3mm;vertical-align:middle;overflow:hidden;white-space:nowrap}
 .copy th{color:var(--c);font-weight:700;text-align:center}
@@ -292,7 +296,7 @@ function render(){
   t.none=!rows.length&&!t.prev&&!t.paid;
   if(hasDoc()&&!state.slip)state.slip=($("date").value||today()).replace(/-/g,"")+String(numv($("no").value)).padStart(4,"0")+stamp();
   const v={...state,slip:hasDoc()?state.slip:""};
-  $("paper").innerHTML=(state.copies==="1"?"":copyHTML(false,v,rows,t))+copyHTML(true,v,rows,t)+`<div class="foot">${footHTML()}</div>`;
+  $("paper").innerHTML=(state.copies==="1"?"":copyHTML(false,v,rows,t)+'<div class="cut"><span>절취선</span></div>')+copyHTML(true,v,rows,t)+`<div class="foot">${footHTML()}</div>`;
   const n=filled().length;$("cnt").textContent=n>ROWS?`${n}줄 가운데 ${ROWS}줄만 찍힙니다.`:`${n}/${ROWS}줄`;
   store(KEY,JSON.stringify(state));
   $("saved").textContent="이 기기에 저장됨 · "+new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"});
